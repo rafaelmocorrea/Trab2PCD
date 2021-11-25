@@ -94,74 +94,80 @@ int main(){
     int iteracoes = 2;      //Numero de iteracoes
     int cont_aux;           //Contador auxiliar
     int tipo = NORMAL;        //Altera o tipo do jogo
-    int soma = 0;
-    int m,n;
+    int soma;
+    int m, n, n_testes = 50;
     struct timeb fim, inicio;
     long tempo;
+    long total_tempo;
 
-    grid = calloc(N, sizeof(int *));
-    newgrid = calloc(N, sizeof(int *));
+    for (int r = 0; r < n_testes; r++){
+        grid = calloc(N, sizeof(int *));
+        newgrid = calloc(N, sizeof(int *));
+        soma = 0;
 
-    for (int i = 0; i < N; i++){
-        grid[i] = calloc(N,sizeof(int));
-        newgrid[i] = calloc(N,sizeof(int));
-    }
+        for (int i = 0; i < N; i++){
+            grid[i] = calloc(N,sizeof(int));
+            newgrid[i] = calloc(N,sizeof(int));
+        }
 
-    glider(grid);
-    pentomino(grid);
+        glider(grid);
+        pentomino(grid);
 
-    printf("Condicao inicial: %d",somaMatriz(grid,N));
+        //printf("Condicao inicial: %d",somaMatriz(grid,N));
 
 
-    for (int i = 0; i < iteracoes; i++){
-        for (int k = 0; k < N; k++){
-            for (int l = 0; l < N; l++){
-                cont_aux = getNeighbors(grid,k,l,N);
-                if (grid[k][l] == VIVO){
-                    if (cont_aux < 2 || cont_aux >= 4){
-                        newgrid[k][l] = MORTO;
-                    } else {
-                        newgrid[k][l] = VIVO;
-                    }
-                } else {
-                    if (tipo != HIGH){
-                        if (cont_aux == 3){
-                            newgrid[k][l] = VIVO;
-                        } else {
+        for (int i = 0; i < iteracoes; i++){
+            for (int k = 0; k < N; k++){
+                for (int l = 0; l < N; l++){
+                    cont_aux = getNeighbors(grid,k,l,N);
+                    if (grid[k][l] == VIVO){
+                        if (cont_aux < 2 || cont_aux >= 4){
                             newgrid[k][l] = MORTO;
+                        } else {
+                            newgrid[k][l] = VIVO;
                         }
                     } else {
-                        if (cont_aux == 3 || cont_aux == 6){
-                            newgrid[k][l] = VIVO;
+                        if (tipo != HIGH){
+                            if (cont_aux == 3){
+                                newgrid[k][l] = VIVO;
+                            } else {
+                                newgrid[k][l] = MORTO;
+                            }
                         } else {
-                            newgrid[k][l] = MORTO;
+                            if (cont_aux == 3 || cont_aux == 6){
+                                newgrid[k][l] = VIVO;
+                            } else {
+                                newgrid[k][l] = MORTO;
+                            }
                         }
                     }
                 }
             }
-        }
-        copia_matriz(grid,newgrid,N);
-        if (i+1 == iteracoes){
-            ftime(&inicio);
-            #pragma omp parallel num_threads(NUM_THREADS) shared(soma)
-            {
-                #pragma omp for private(m,n)
-                for (m = 0; m<N;m++){
-                    for (n=0;n<N;n++){
-                        #pragma omp critical
-                        soma += grid[m][n];
+            copia_matriz(grid,newgrid,N);
+            if (i+1 == iteracoes){
+                ftime(&inicio);
+                #pragma omp parallel num_threads(NUM_THREADS) shared(soma)
+                {
+                    #pragma omp for private(m,n)
+                    for (m = 0; m<N;m++){
+                        for (n=0;n<N;n++){
+                            #pragma omp critical
+                            soma += grid[m][n];
+                        }
                     }
                 }
+                ftime(&fim);
+                tempo = (long) (1000.0 * (fim.time-inicio.time)+(fim.millitm-inicio.millitm));
+                //printf("\nSoma iteracao %d: %d",i+1,soma);
             }
-            ftime(&fim);
-            tempo = (long) (1000.0 * (fim.time-inicio.time)+(fim.millitm-inicio.millitm));
-            printf("\nSoma iteracao %d: %d",i+1,soma);
-            printf("\nTempo: %ums",tempo);
         }
+        if (r == 0)
+            total_tempo = tempo;
+        total_tempo = (total_tempo + tempo)/2;
+        printf("\nTeste %d Tempo: %ums",r, total_tempo);
+        free(grid);
+        free(newgrid);
     }
-
-    free(grid);
-    free(newgrid);
-
+    printf("\nMedia de %d iteracoes com %d Threads: %ums", n_testes,NUM_THREADS, total_tempo);
     return 0;
 }

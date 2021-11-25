@@ -157,6 +157,7 @@ int main(){
 
     free(grid);
     free(newgrid);
+    free(soma);
 
     return 0;
 }
