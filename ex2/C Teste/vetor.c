@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <omp.h>
+#include <sys/timeb.h>
 
 #define VIVO 1
 #define MORTO 0
@@ -90,14 +91,19 @@ int main(){
     int **grid;             //grid atual
     int **newgrid;          //proximo grid
     int N = 2048;             //NxN
-    int iteracoes = 500;      //Numero de iteracoes
+    int iteracoes = 2;      //Numero de iteracoes
     int cont_aux;           //Contador auxiliar
     int tipo = NORMAL;        //Altera o tipo do jogo
-    int soma = 0;
-    int m,n;
+    int *soma;
+    int m, n;
+    int thread_atual;
+    int soma_final = 0;
+    struct timeb fim, inicio;
+    long tempo;
 
     grid = calloc(N, sizeof(int *));
     newgrid = calloc(N, sizeof(int *));
+    soma = calloc(NUM_THREADS, sizeof(int));
 
     for (int i = 0; i < N; i++){
         grid[i] = calloc(N,sizeof(int));
@@ -139,17 +145,20 @@ int main(){
         }
         copia_matriz(grid,newgrid,N);
         if (i+1 == iteracoes){
-            #pragma omp parallel num_threads(NUM_THREADS) shared(soma)
-            {
-                #pragma omp for private(m,n)
-                for (m = 0; m<N; m++){
+            ftime(&inicio);
+            #pragma omp parallel for num_threads(NUM_THREADS) private(m,n,thread_atual)
+                for (m = 0; m<N;m++){
                     for (n=0;n<N;n++){
-                        #pragma omp critical
-                        soma += grid[m][n];
+                       thread_atual = omp_get_thread_num();
+                       soma[thread_atual] += grid[m][n];
                     }
                 }
-            }
-            printf("\nSoma iteracao %d: %d",i+1,soma);
+            for (int k = 0; k < NUM_THREADS; k++)
+                soma_final += soma[k];
+            ftime(&fim);
+            tempo = (long) (1000.0 * (fim.time-inicio.time)+(fim.millitm-inicio.millitm));
+            printf("\nSoma iteracao %d: %d",i+1,soma_final);
+            printf("\nTempo: %ums",tempo);
         }
     }
 
