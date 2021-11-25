@@ -8,7 +8,7 @@
 #define MORTO 0
 #define HIGH 1
 #define NORMAL 0
-#define NUM_THREADS 1
+#define NUM_THREADS 8
 
 void imprime_matriz(int** matriz, int n){
     printf("\n");
@@ -160,7 +160,7 @@ int main(){
                     soma_final += soma[k];
                 ftime(&fim);
                 tempo = (long) (1000.0 * (fim.time-inicio.time)+(fim.millitm-inicio.millitm));
-                printf("\nSoma iteracao %d: %d",i+1,soma_final);
+                //printf("\nSoma iteracao %d: %d",i+1,soma_final);
             }
         }
         if (r == 0)

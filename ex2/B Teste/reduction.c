@@ -8,7 +8,7 @@
 #define MORTO 0
 #define HIGH 1
 #define NORMAL 0
-#define NUM_THREADS 2
+#define NUM_THREADS 8
 
 void imprime_matriz(int** matriz, int n){
     printf("\n");
